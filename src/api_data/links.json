@@ -1,0 +1,65 @@
+{
+    "message": "Select the article you want to read",
+    "results": [
+      {
+        "index": 1,
+        "url": "https://en.wikipedia.org/wiki/James_Bond",
+        "title": "James Bond",
+        "short_description": "Media franchise about a British spy"
+      },
+      {
+        "index": 2,
+        "url": "https://en.wikipedia.org/wiki/List_of_James_Bond_films",
+        "title": "List of James Bond films",
+        "short_description": "No short description available."
+      },
+      {
+        "index": 3,
+        "url": "https://en.wikipedia.org/wiki/James_Bond_(literary_character)",
+        "title": "James Bond (literary character)",
+        "short_description": "Fictional spy"
+      },
+      {
+        "index": 4,
+        "url": "https://en.wikipedia.org/wiki/No_Time_to_Die",
+        "title": "No Time to Die",
+        "short_description": "2021 James Bond film by Cary Joji Fukunaga"
+      },
+      {
+        "index": 5,
+        "url": "https://en.wikipedia.org/wiki/Daniel_Craig",
+        "title": "Daniel Craig",
+        "short_description": "English actor (born 1968)"
+      },
+      {
+        "index": 6,
+        "url": "https://en.wikipedia.org/wiki/Q_(James_Bond)",
+        "title": "Q (James Bond)",
+        "short_description": "Fictional character from the James Bond franchise"
+      },
+      {
+        "index": 7,
+        "url": "https://en.wikipedia.org/wiki/Portrayal_of_James_Bond_in_film",
+        "title": "Portrayal of James Bond in film",
+        "short_description": "Fictional character"
+      },
+      {
+        "index": 8,
+        "url": "https://en.wikipedia.org/wiki/Production_of_the_James_Bond_films",
+        "title": "Production of the James Bond films",
+        "short_description": "No short description available."
+      },
+      {
+        "index": 9,
+        "url": "https://en.wikipedia.org/wiki/Die_Another_Day",
+        "title": "Die Another Day",
+        "short_description": "2002 James Bond film by Lee Tamahori"
+      },
+      {
+        "index": 10,
+        "url": "https://en.wikipedia.org/wiki/Quantum_of_Solace",
+        "title": "Quantum of Solace",
+        "short_description": "2008 James Bond film"
+      }
+    ]
+  }

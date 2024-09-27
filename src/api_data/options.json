@@ -1,0 +1,10 @@
+{
+    "message": "Select an option",
+    "options": [
+      "Read short description of the page.",
+      "Read summary of the page.",
+      "Read the whole page.",
+      "Read only captions of the images present on the page.",
+      "Read all the References present on the page."
+    ]
+}
