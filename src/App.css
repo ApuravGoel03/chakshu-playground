@@ -2,5 +2,6 @@
   margin: 0 auto;
   text-align: center;
   background-color: #F5F7F8;
-  width:100vw
+  width:100vw;
+  white-space: pre-line;
 }
