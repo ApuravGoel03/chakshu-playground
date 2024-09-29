@@ -16,7 +16,8 @@ function App() {
   const [links, setLinks] = useState([])
   const [selectedArticle, setSelectedArticle] = useState({})
   const [selectedopt, setSelectedOpt] = useState(0)
-  const synthRef = useRef(window.speechSynthesis); 
+  const synthRef = useRef(window.speechSynthesis);
+  const divRef = useRef(null); 
 
   useEffect(() => {
     const populateVoices = () => {
@@ -36,17 +37,23 @@ function App() {
         window.speechSynthesis.onvoiceschanged = null;
     };
   }, []); // Empty dependency array to run only once
+
   useEffect(() =>{
     const handleKeydown = (event) => {
       if (event.ctrlKey) {
           event.preventDefault();
           // Pause/Resume speech synthesis
           if (synthRef.current.speaking) {
+            console.log("hello")
               if (synthRef.current.paused) {
                   synthRef.current.resume();
               } else {
                   synthRef.current.pause();
               }
+
+              // if(!synthRef.current.paused && synthRef.current.pending) {
+              //   //synthRef.current.resume()
+              // }
           }
       }
     };
@@ -59,7 +66,7 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if(event.key === 'Enter' || event.key === 'Space' || event.ctrlKey) return
+      if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
       console.log('link ke ander useffect')
       if(synthRef.current.speaking) synthRef.current.cancel()
       const key = parseInt(event.key, 10); // Convert the key to an integer
@@ -82,7 +89,7 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if(event.key === 'Enter' || event.key === 'Space' || event.ctrlKey) return
+      if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
       console.log('option ke ander vale useeffect')
       if(synthRef.current.speaking) synthRef.current.cancel()
       const key = parseInt(event.key, 10); // Convert the key to an integer
@@ -101,6 +108,22 @@ function App() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [options]);
+
+  useEffect(() => {
+    const scrollToBottomSmoothly = () => {
+      if (synthRef.current.speaking&& !synthRef.current.paused && divRef.current) {
+        const targetScrollTop = divRef.current.scrollHeight;
+        const currentScrollTop = divRef.current.scrollTop;
+        const step = 10; // Adjust step for speed (higher values scroll faster)
+        if (currentScrollTop < targetScrollTop) {
+          const newScrollTop = Math.min(currentScrollTop + step, targetScrollTop);
+          divRef.current.scrollTop = newScrollTop;
+          setTimeout(scrollToBottomSmoothly, 20); // Adjust timeout for speed (lower values scroll faster)
+        }
+      }
+    };
+    scrollToBottomSmoothly();
+  }, [messages]);
 
   const handleSubmit = (speech) =>{
     console.log("Function called with ",speech)
@@ -136,7 +159,6 @@ function App() {
         speak(`Option ${index + 1}:\nTitle : ${result.title}\nShort Description : ${result.short_description}`)
       }
     })
-    //while(synthRef.current.speaking);
     
   };
 
@@ -151,7 +173,6 @@ function App() {
       console.log(phases)
       speak(`Press ${index + 1} for ${option}`)
     })
-    //while(synthRef.current.speaking);
     
   };
 
@@ -210,38 +231,28 @@ function App() {
     addMessage(text,'system')
   };
 
-  const isValidLinkSelection = (speechText) => {
-    return options.some((opt, index) => `${index + 1}`.toLowerCase() === speechText.toLowerCase());
-  };
-
-  const isValidOption = (speechText) => {
-    const validOptions = ['short description', 'summary', 'image captioning', 'full content', 'table navigation'];
-    return validOptions.includes(speechText.toLowerCase());
-  };
-
-  const resetToInitialState = () => {
-    setOptions([]);
-    setPhases('QUERY')
-  };
+  // const resetToInitialState = () => {
+  //   setOptions([]);
+  //   setPhases('QUERY')
+  // };
   return (
     <div style={{display:'flex',flexDirection:'column', justifyContent:'center', height:'100vh',margin:'0'}}>
-      <div style={{color:'#3795BD',height:'15%', padding:'2px 10px 10px'}}>
+      <div style={{color:'#3795BD',height:'15%', padding:'2px 10px'}}>
         <h1>CHAKSHU</h1>
       </div>
-      <main style = {{display:'flex', flexDirection:'column', alignItems:'center',justifyContent:'center',height:'65%', padding: '10px'}}>
+      <main style = {{display:'flex', flexDirection:'column', alignItems:'center',justifyContent:'center',height:'70%', padding: '10px'}}>
       <Box
+        ref = {divRef}
         sx={{
-          padding: '30px',
-          height: '90%',
+          padding: '35px',
+          height: '100%',
           width:'80%',
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
           gap: '10px',
-          marginBottom: '20px',
           marginX:'50px',
-          backgroundColor:'#D1E9F6',
-          borderRadius: '25px'
+          backgroundColor:'#D1E9F6'
         }}
       >
         {messages.map((message, index) => (
