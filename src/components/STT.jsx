@@ -85,8 +85,15 @@ const STT = ({onTextSubmit}) => {
       // Start or stop recognition based on isListening state
       if (recognition) {
         if (isListening) {
-          recognition.start();
-          inputRef.current.focus();
+          try{
+            recognition.start();
+            inputRef.current.focus();
+          }
+          catch{
+            recognition.stop();
+            inputRef.current.blur();
+          }
+          
         } else {
           recognition.stop();
           inputRef.current.blur(); 
