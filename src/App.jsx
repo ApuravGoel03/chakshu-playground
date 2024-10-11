@@ -12,6 +12,7 @@ function App() {
   const [options, setOptions] = useState([]); // Holds the options for user commands
   const [voices, setVoices] = useState([]);
   const [phases, setPhases] = useState('QUERY')
+  const [pause, setPause] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [links, setLinks] = useState([])
   const [selectedArticle, setSelectedArticle] = useState({})
@@ -28,7 +29,7 @@ function App() {
 
     // Populate voices on component mount
     populateVoices();
-    if(synthRef.current.speaking) synthRef.current.cancel()
+    window.speechSynthesis.cancel()
     // Add event listener for voice changes
     window.speechSynthesis.onvoiceschanged = populateVoices;
 
@@ -45,16 +46,23 @@ function App() {
           // Pause/Resume speech synthesis
           if (synthRef.current.speaking) {
             console.log("hello")
-              if (synthRef.current.paused) {
-                  synthRef.current.resume();
+            
+              if (pause) {
+                console.log("Played");
+                setPause(false);
+                synthRef.current.resume();
               } else {
-                  synthRef.current.pause();
+                console.log("Rukja")
+                setPause(true);
+                synthRef.current.pause();
               }
+             
 
               // if(!synthRef.current.paused && synthRef.current.pending) {
               //   //synthRef.current.resume()
               // }
           }
+          console.log(synthRef.current);
       }
     };
     document.addEventListener('keydown', handleKeydown);
@@ -62,7 +70,7 @@ function App() {
     return () => {
       document.removeEventListener('keydown', handleKeydown);
     };
-  },[isSpeaking])
+  },[isSpeaking, pause])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -221,16 +229,30 @@ function App() {
     console.log('Speaking:', text);
     console.log(utterance)
     // Event listeners for speech
-    utterance.onstart = () => console.log('Speech has started');
-    utterance.onend = () => console.log('Speech has ended')
+    utterance.onstart = () => {console.log('Speech has started');
+      console.log(synthRef.current);
+      if(pause){
+        synthRef.current.pause();
+      }
+      else{
+        synthRef.current.resume();
+      }
+    }
+    utterance.onend = (event) => {console.log('Speech has ended', event, synthRef.current)
+      if(synthRef.current.paused){
+        setPause(true);
+      }
+    
+    }
+    
     utterance.onerror = (event) => console.error('Speech synthesis error:', event.error);
-    utterance.onpause = () => console.log("paused")
+    utterance.onpause = (event) => {console.log("paused", event)}
 
     setIsSpeaking(true)
     synthRef.current.speak(utterance);
     addMessage(text,'system')
   };
-
+  console.log("pause", pause)
   // const resetToInitialState = () => {
   //   setOptions([]);
   //   setPhases('QUERY')
