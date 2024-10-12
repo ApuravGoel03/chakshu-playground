@@ -76,7 +76,9 @@ function App() {
     const handleKeyDown = (event) => {
       if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
       console.log('link ke ander useffect')
-      if(synthRef.current.speaking) synthRef.current.cancel()
+      if(synthRef.current.speaking) {synthRef.current.cancel();
+        setPause(false);
+      }
       const key = parseInt(event.key, 10); // Convert the key to an integer
       console.log(event.key)
       addMessage(key,'user')
@@ -99,7 +101,9 @@ function App() {
     const handleKeyDown = (event) => {
       if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
       console.log('option ke ander vale useeffect')
-      if(synthRef.current.speaking) synthRef.current.cancel()
+      if(synthRef.current.speaking) {synthRef.current.cancel()
+        setPause(false);
+      }
       const key = parseInt(event.key, 10); // Convert the key to an integer
       addMessage(key,'user')
       if (!isNaN(key) && key >= 1 && key <= options.length) {
