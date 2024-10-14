@@ -47,7 +47,7 @@ function App() {
           if (synthRef.current.speaking) {
             console.log("hello")
             
-              if (pause) {
+              if (pause && (synthRef.current.pending || synthRef.current.speaking)) {
                 console.log("Played");
                 setPause(false);
                 synthRef.current.resume();
@@ -243,7 +243,7 @@ function App() {
       }
     }
     utterance.onend = (event) => {console.log('Speech has ended', event, synthRef.current)
-      if(synthRef.current.paused){
+      if(synthRef.current.paused && (synthRef.current.pending || synthRef.current.speaking)){
         setPause(true);
       }
     
