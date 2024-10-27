@@ -41,7 +41,7 @@ function App() {
     
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-      
+      console.log(transcript)
       if (transcript.includes('okay chakshu')) {
         setIsListening(true); // Now, we are actively listening for the user's command
         handlePromptListening();
@@ -50,7 +50,7 @@ function App() {
 
     recognition.onend = () => {
       console.log("recognition ended")
-      setIsRecognitionActive(false); // If the recognition stops for any reason, update the state
+      setIsRecognitionActive(false); // If the recognition stops for any reason, update the state   
     };
 
     recognition.onerror = (event) => {
@@ -105,7 +105,7 @@ function App() {
     const populateVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices();
         setVoices(availableVoices);
-        console.log('Available voices:', availableVoices);
+        // console.log('Available voices:', availableVoices);
     };
 
     // Populate voices on component mount
@@ -244,7 +244,7 @@ function App() {
 
   const callQueryAPI = (query) => {
     // Api calling here for links fetching based on query
-
+    console.log("callQueryAPI ")
     speak(Links.message);
     Links.results.map((result,index) =>{
       if(index < 4){
@@ -252,13 +252,12 @@ function App() {
         speak(`Option ${index + 1}:\nTitle : ${result.title}\nShort Description : ${result.short_description}`)
       }
     })
-    console.log("isListening ", isListening)
   };
 
   const callLinkAPI = (article) => {
     // Api calling here for telling the user options available
 
-    
+    console.log("callLinkAPI")
     setPhases('OPTION_SELECTION')
     speak(Options.message)
     Options.options.map((option,index) => {
@@ -271,7 +270,7 @@ function App() {
 
   const callOptionAPI = (option) => {
     // Api calling here to get the content based on selected article and option
-    
+    console.log("callOptionAPI")
     console.log(phases)
     console.log(option)
     if(option === 1){
@@ -293,6 +292,10 @@ function App() {
     else if(option === 5){
       speak(Content[4].references)
     }
+    else{
+      speak("you selected " + option)
+      speak(Content[1].summary)
+    }
   };
 
   const speak = (text) => {
@@ -312,10 +315,10 @@ function App() {
 
     // Debugging: Log the text being spoken
     console.log('Speaking:', text);
-    console.log(utterance)
+    // console.log(utterance)
     // Event listeners for speech
     utterance.onstart = () => {console.log('Speech has started');
-      console.log(synthRef.current);
+      // console.log(synthRef.current);
       if(pause){
         synthRef.current.pause();
       }
@@ -323,7 +326,8 @@ function App() {
         synthRef.current.resume();
       }
     }
-    utterance.onend = (event) => {console.log('Speech has ended', event, synthRef.current)
+    utterance.onend = (event) => {
+      // console.log('Speech has ended', event, synthRef.current)
       if(synthRef.current.paused && (synthRef.current.pending || synthRef.current.speaking)){
         setPause(true);
       }
