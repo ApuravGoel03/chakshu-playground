@@ -11,7 +11,7 @@ function App() {
   const [messages, setMessages] = useState([]); // Holds the chat messages
   const [options, setOptions] = useState([]); // Holds the options for user commands
   const [voices, setVoices] = useState([]);
-  const [phases, setPhases] = useState('QUERY')
+  const [phases, setPhases] = useState("QUERY")
   const [pause, setPause] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [links, setLinks] = useState([])
@@ -24,6 +24,7 @@ function App() {
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [activated, setActivated] = useState(false);
+  const [temp, setTemp] = useState(0)
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -42,8 +43,11 @@ function App() {
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log(transcript)
-      if (transcript.includes('okay chakshu')) {
+      if (transcript.includes('okay chakshu') && temp === 0) {
         setIsListening(true); // Now, we are actively listening for the user's command
+        handlePromptListening();
+      }
+      else if(temp > 0){
         handlePromptListening();
       }
     };
@@ -65,7 +69,11 @@ function App() {
     return () => {
       recognition.stop(); // Clean up on unmount
     };
-  }, []);
+  }, [temp]);
+
+  useEffect(() => {
+    console.log("******************",phases)
+  }, [phases]);
 
   const startRecognition = () => {
     if (!isRecognitionActive && recognitionRef.current) {
@@ -91,11 +99,11 @@ function App() {
   const handlePromptListening = () => {
     recognitionRef.current.onresult = (event) => {
       const userCommand = event.results[event.results.length - 1][0].transcript.trim();
+      console.log("userCommand",userCommand)
       if (!userCommand.toLowerCase().includes('okay chakshu')) {
         handleSubmit(userCommand)
         setResponse(`You said: "${userCommand}". Sample response generated.`);
         setIsListening(false); // Stop listening after receiving the command
-        speak(response)
       }
     };
   };
@@ -153,54 +161,54 @@ function App() {
     };
   },[isSpeaking, pause])
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
-      console.log('link ke ander useffect')
-      if(synthRef.current.speaking) {synthRef.current.cancel();
-        setPause(false);
-      }
-      const key = parseInt(event.key, 10); // Convert the key to an integer
-      console.log(event.key)
-      addMessage(key,'user')
-      if (!isNaN(key) && key >= 1 && key <= links.length) {
-        setSelectedArticle(links[key - 1])
-        callLinkAPI(selectedArticle)
-      }
-      else{
-        speak(`Press the correct link`)
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (event) => {
+  //     if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
+  //     console.log('link ke ander useffect')
+  //     if(synthRef.current.speaking) {synthRef.current.cancel();
+  //       setPause(false);
+  //     }
+  //     const key = parseInt(event.key, 10); // Convert the key to an integer
+  //     console.log(event.key)
+  //     addMessage(key,'user')
+  //     if (!isNaN(key) && key >= 1 && key <= links.length) {
+  //       setSelectedArticle(links[key - 1])
+  //       callLinkAPI(selectedArticle)
+  //     }
+  //     else{
+  //       speak(`Press the correct link`)
+  //     }
+  //   };
 
-    if(phases === 'LINK_SELECTION') window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [links, phases]);
+  //   if(phases === 'LINK_SELECTION') window.addEventListener('keydown', handleKeyDown);
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, [links, phases]);
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
-      console.log('option ke ander vale useeffect')
-      if(synthRef.current.speaking) {synthRef.current.cancel()
-        setPause(false);
-      }
-      const key = parseInt(event.key, 10); // Convert the key to an integer
-      addMessage(key,'user')
-      if (!isNaN(key) && key >= 1 && key <= options.length) {
-        setSelectedOpt(key)
-        callOptionAPI(key)
-      }
-      else{
-        speak(`Press the correct option`)
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (event) => {
+  //     if(event.key === 'Enter' || event.code === 'Space' || event.ctrlKey) return
+  //     console.log('option ke ander vale useeffect')
+  //     if(synthRef.current.speaking) {synthRef.current.cancel()
+  //       setPause(false);
+  //     }
+  //     const key = parseInt(event.key, 10); // Convert the key to an integer
+  //     addMessage(key,'user')
+  //     if (!isNaN(key) && key >= 1 && key <= options.length) {
+  //       setSelectedOpt(key)
+  //       callOptionAPI(key)
+  //     }
+  //     else{
+  //       speak(`Press the correct option`)
+  //     }
+  //   };
 
-    if(phases === 'OPTION_SELECTION') window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [options]);
+  //   if(phases === 'OPTION_SELECTION') window.addEventListener('keydown', handleKeyDown);
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, [options]);
 
   useEffect(() => {
     const scrollToBottomSmoothly = () => {
@@ -223,15 +231,18 @@ function App() {
     addMessage(speech, 'user');
     processSpeechInput(speech);
   }
+
+
   const processSpeechInput = (speechText) => {
     if (speechText.trim() === '') return; // Ignore empty input
-    if (phases === 'QUERY') {
+    if (phases === "QUERY") {
       callQueryAPI(speechText);
-      setPhases('LINK_SELECTION')
+      setPhases("LINK_SELECTION")
+      console.log("............",phases);
     } 
-    else if (phases === 'LINK_SELECTION') {
+    else if (phases === "LINK_SELECTION") {
         callLinkAPI(speechText);
-    } else if (phases === 'OPTION_SELECTION') {
+    } else if (phases === "OPTION_SELECTION") {
         callOptionAPI(speechText);
     } else {
       resetToInitialState();
@@ -258,7 +269,7 @@ function App() {
     // Api calling here for telling the user options available
 
     console.log("callLinkAPI")
-    setPhases('OPTION_SELECTION')
+    setPhases("OPTION_SELECTION")
     speak(Options.message)
     Options.options.map((option,index) => {
       setOptions((options) => [...options, option])
@@ -273,28 +284,30 @@ function App() {
     console.log("callOptionAPI")
     console.log(phases)
     console.log(option)
-    if(option === 1){
-      speak(Content[0].short_description)
-    }
-    else if(option === 2){
-      speak(Content[1].summary)
-    }
-    else if(option === 3){
-      let word = ""
-      Content[2].text.map((s) => {
-        word += s
-      })
-      speak(word)
-    }
-    else if(option === 4){
-      speak(Content[3].image_captions)
-    }
-    else if(option === 5){
-      speak(Content[4].references)
+
+    //logic to fetch index from "one", "two / to" , "three", "won", "for"
+
+    if (option.includes("1")) {
+      speak(Content[0].short_description);
+    } 
+    else if (option.includes("2")) {
+        speak(Content[1].summary);
+    } 
+    else if (option.includes("3")) {
+        let word = "";
+        Content[2].text.map((s) => {
+            word += s;
+        });
+        speak(word);
+    } 
+    else if (option.includes("4")) {
+        speak(Content[3].image_captions);
+    } else if (option.includes("5")) {
+        speak(Content[4].references);
     }
     else{
       speak("you selected " + option)
-      speak(Content[1].summary)
+      speak(Content[0].short_description)
     }
   };
 
@@ -340,6 +353,7 @@ function App() {
     setIsSpeaking(true)
     synthRef.current.speak(utterance);
     addMessage(text,'system')
+    setTemp(temp+1)
   };
 
 
