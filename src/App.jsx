@@ -102,6 +102,7 @@ function App() {
   //     startRecognition(); // Restart recognition after brief delay
   //   }, 500);
   // };
+  
   const restartRecognition = () => {
     stopRecognition();
     setTimeout(() => {
