@@ -52,11 +52,18 @@ function App() {
       }
     };
 
+    // recognition.onend = () => {
+    //   console.log("recognition ended")
+    //   setIsRecognitionActive(false); // If the recognition stops for any reason, update the state   
+    // };
     recognition.onend = () => {
-      console.log("recognition ended")
-      setIsRecognitionActive(false); // If the recognition stops for any reason, update the state   
+      console.log("Recognition ended");
+      if (isListening) {
+        restartRecognition();
+      } else {
+        setIsRecognitionActive(false);
+      }
     };
-
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
         restartRecognition();
@@ -89,12 +96,22 @@ function App() {
     }
   };
 
+  // const restartRecognition = () => {
+  //   stopRecognition();
+  //   setTimeout(() => {
+  //     startRecognition(); // Restart recognition after brief delay
+  //   }, 500);
+  // };
   const restartRecognition = () => {
     stopRecognition();
     setTimeout(() => {
-      startRecognition(); // Restart recognition after brief delay
-    }, 500);
+      if (!isRecognitionActive) {
+        console.log("Restarting recognition...");
+        startRecognition();
+      }
+    }, 500); // Small delay to prevent immediate re-triggering issues
   };
+
 
   const handlePromptListening = () => {
     recognitionRef.current.onresult = (event) => {
