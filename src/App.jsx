@@ -73,7 +73,7 @@ function App() {
 
   useEffect(() => {
     console.log("******************",phases)
-  }, [phases]);
+  }, [phases, isRecognitionActive]);
 
   const startRecognition = () => {
     if (!isRecognitionActive && recognitionRef.current) {
