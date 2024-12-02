@@ -27,52 +27,73 @@ function App() {
   const [temp, setTemp] = useState(0)
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const pauseSpeech = () => {
+    if (synthRef.current.speaking && !synthRef.current.paused) {
+      console.log('Pausing speech...');
+      synthRef.current.pause();
+      setPause(true);
+    }
+  };
+  
+  const continueSpeech = () => {
+    if (synthRef.current.paused) {
+      console.log('Resuming speech...');
+      synthRef.current.resume();
+      setPause(false);
+    }
+  };
+  
+  const reloadApp = () => {
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (!SpeechRecognition) {
       console.error("SpeechRecognition API is not supported in this browser.");
       return;
     }
-
+  
     const recognition = new SpeechRecognition();
     recognition.continuous = true; // Keep running continuously
     recognition.interimResults = false;
     recognition.lang = 'en-US';
     recognitionRef.current = recognition;
-    
+  
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-      console.log(transcript)
-      if (transcript.includes('okay chakshu') && temp === 0) {
+      console.log("Transcript:", transcript);
+  
+      if (transcript.includes('chakshu pause') || transcript.includes('chaksu pause')) {
+        pauseSpeech(); // Call the pause function
+      } else if (transcript.includes('chakshu continue') || transcript.includes('chaksu continue')) {
+        continueSpeech(); // Call the resume function
+      } else if (transcript.includes('chakshu reload') || transcript.includes('chaksu reload')) {
+        reloadApp(); // Call the reload function
+      } else if (
+        (transcript.includes('okay chakshu') || transcript.includes('ok chakshu') || 
+        transcript.includes('ok chaksu') || transcript.includes('okay chaksu')) && temp === 0
+      ) {
         setIsListening(true); // Now, we are actively listening for the user's command
-        handlePromptListening();
-      }
-      else if(temp > 0){
-        handlePromptListening();
+        handlePromptListening("");
+      } else if (temp > 0) {
+        handlePromptListening(transcript);
       }
     };
-
-    // recognition.onend = () => {
-    //   console.log("recognition ended")
-    //   setIsRecognitionActive(false); // If the recognition stops for any reason, update the state   
-    // };
+     
+  
     recognition.onend = () => {
       console.log("Recognition ended");
-      if (isListening) {
-        restartRecognition();
-      } else {
-        setIsRecognitionActive(false);
-      }
+      setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
+      // restartRecognition();
     };
+  
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
-        restartRecognition();
-  
+      restartRecognition();
     };
-
-    // Start the recognition service initially
-    startRecognition();
-
+  
+    startRecognition(); // Start the recognition service initially
+  
     return () => {
       recognition.stop(); // Clean up on unmount
     };
@@ -80,10 +101,11 @@ function App() {
 
   useEffect(() => {
     console.log("******************",phases)
-  }, [phases, isRecognitionActive]);
+  }, [phases]);
 
   const startRecognition = () => {
     if (!isRecognitionActive && recognitionRef.current) {
+      // if ( recognitionRef.current) {
       recognitionRef.current.start();
       setIsRecognitionActive(true); // Recognition is running, listening for wake word
     }
@@ -113,16 +135,45 @@ function App() {
   };
 
 
-  const handlePromptListening = () => {
-    recognitionRef.current.onresult = (event) => {
-      const userCommand = event.results[event.results.length - 1][0].transcript.trim();
-      console.log("userCommand",userCommand)
-      if (!userCommand.toLowerCase().includes('okay chakshu')) {
-        handleSubmit(userCommand)
+  const handlePromptListening = (prompt) => {
+    if (prompt.length === 0) {
+      console.log("Listening to Prompt");
+      recognitionRef.current.onresult = (event) => {
+        const userCommand = event.results[event.results.length - 1][0].transcript.trim();
+        console.log("userCommand", userCommand);
+    
+        if (
+          !(
+            userCommand.toLowerCase().includes('okay chakshu') || 
+            userCommand.toLowerCase().includes('ok chakshu') || 
+            userCommand.toLowerCase().includes('ok chaksu') || 
+            userCommand.toLowerCase().includes('okay chaksu')
+          )
+        ) {
+          handleSubmit(userCommand);
+          setResponse(`You said: "${userCommand}". Sample response generated.`);
+          setIsListening(false); // Stop listening after receiving the command
+        }
+      };
+    } else {
+      const userCommand = prompt;
+      console.log("userCommand", userCommand);
+    
+      if (
+        !(
+          userCommand.toLowerCase().includes('okay chakshu') || 
+          userCommand.toLowerCase().includes('ok chakshu') || 
+          userCommand.toLowerCase().includes('ok chaksu') || 
+          userCommand.toLowerCase().includes('okay chaksu')
+        )
+      ) {
+        handleSubmit(userCommand);
         setResponse(`You said: "${userCommand}". Sample response generated.`);
         setIsListening(false); // Stop listening after receiving the command
       }
-    };
+    }
+    
+    
   };
   
 
@@ -291,7 +342,7 @@ function App() {
     Options.options.map((option,index) => {
       setOptions((options) => [...options, option])
       console.log(phases)
-      speak(`Press ${index + 1} for ${option}`)
+      speak(`Option ${index + 1} for ${option}`)
     })
     
   };
@@ -303,28 +354,32 @@ function App() {
     console.log(option)
 
     //logic to fetch index from "one", "two / to" , "three", "won", "for"
+    //for now hardcoded
 
-    if (option.includes("1")) {
+    if (option.includes("1") || option.includes("one") || option.includes("won")) {
       speak(Content[0].short_description);
     } 
-    else if (option.includes("2")) {
+    else if (option.includes("2") || option.includes("to") || option.includes("two") || option.includes("too")) {
         speak(Content[1].summary);
     } 
-    else if (option.includes("3")) {
+    else if (option.includes("3") || option.includes("three") || option.includes("tree")) {
         let word = "";
         Content[2].text.map((s) => {
             word += s;
         });
         speak(word);
     } 
-    else if (option.includes("4")) {
+    else if (option.includes("4") || option.includes("four") || option.includes("for") ) {
         speak(Content[3].image_captions);
     } else if (option.includes("5")) {
         speak(Content[4].references);
     }
-    else{
+    else if(option.includes("5") || option.includes("five")){
       speak("you selected " + option)
       speak(Content[0].short_description)
+    }
+    else{
+      speak("Can't understand. Please speak the option number!")
     }
   };
 
