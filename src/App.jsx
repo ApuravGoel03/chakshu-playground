@@ -85,7 +85,7 @@ function App() {
     recognition.onend = () => {
       console.log("Recognition ended");
       setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
-      // restartRecognition();
+      restartRecognition();
     };
   
     recognition.onerror = (event) => {
