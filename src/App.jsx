@@ -45,6 +45,7 @@ function App() {
   
   const reloadApp = () => {
     window.location.reload();
+    handleActivation
   };
 
   useEffect(() => {
@@ -70,8 +71,8 @@ function App() {
       } else if (transcript.includes('chakshu reload') || transcript.includes('chaksu reload')) {
         reloadApp(); // Call the reload function
       } else if (
-        (transcript.includes('okay chakshu') || transcript.includes('ok chakshu') || 
-        transcript.includes('ok chaksu') || transcript.includes('okay chaksu')) && temp === 0
+        (transcript.includes('chakshu start') || transcript.includes('chakshu start') || 
+        transcript.includes('chaksu start') || transcript.includes('chaksu start')) && temp === 0
       ) {
         setIsListening(true); // Now, we are actively listening for the user's command
         handlePromptListening("");
@@ -118,22 +119,23 @@ function App() {
     }
   };
 
-  // const restartRecognition = () => {
-  //   stopRecognition();
-  //   setTimeout(() => {
-  //     startRecognition(); // Restart recognition after brief delay
-  //   }, 500);
-  // };
-  
   const restartRecognition = () => {
     stopRecognition();
     setTimeout(() => {
-      if (!isRecognitionActive) {
-        console.log("Restarting recognition...");
-        startRecognition();
-      }
-    }, 500); // Small delay to prevent immediate re-triggering issues
+      console.log("Restarting recognition...");
+      startRecognition(); // Restart recognition after brief delay
+    }, 100);
   };
+  
+  // const restartRecognition = () => {
+  //   stopRecognition();
+  //   setTimeout(() => {
+  //     if (!isRecognitionActive) {
+  //       console.log("Restarting recognition...");
+  //       startRecognition();
+  //     }
+  //   }, 500); // Small delay to prevent immediate re-triggering issues
+  // };
 
 
   const handlePromptListening = (prompt) => {
@@ -144,13 +146,14 @@ function App() {
         console.log("userCommand", userCommand);
     
         if (
-          !(
+          (
             userCommand.toLowerCase().includes('okay chakshu') || 
             userCommand.toLowerCase().includes('ok chakshu') || 
             userCommand.toLowerCase().includes('ok chaksu') || 
             userCommand.toLowerCase().includes('okay chaksu')
           )
         ) {
+          synthRef.current.cancel();// stop current speaking
           handleSubmit(userCommand);
           setResponse(`You said: "${userCommand}". Sample response generated.`);
           setIsListening(false); // Stop listening after receiving the command
@@ -161,13 +164,14 @@ function App() {
       console.log("userCommand", userCommand);
     
       if (
-        !(
+        (
           userCommand.toLowerCase().includes('okay chakshu') || 
           userCommand.toLowerCase().includes('ok chakshu') || 
           userCommand.toLowerCase().includes('ok chaksu') || 
           userCommand.toLowerCase().includes('okay chaksu')
         )
       ) {
+        synthRef.current.cancel();// stop current speaking
         handleSubmit(userCommand);
         setResponse(`You said: "${userCommand}". Sample response generated.`);
         setIsListening(false); // Stop listening after receiving the command
@@ -442,9 +446,9 @@ function App() {
   return (
     <div className="app">
    {!activated? (
-        <button onClick={handleActivation}>
-          Activate Chakshu
-        </button>
+        <div style={{height:'100vh' , alignContent:'center'}} onClick={handleActivation}>
+        Activate Chakshu
+        </div>
       ) : (
         <>
           <div style={{display:'flex',flexDirection:'column', justifyContent:'center', height:'100vh',margin:'0'}}>
