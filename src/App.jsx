@@ -431,6 +431,7 @@ function App() {
     synthRef.current.speak(utterance);
     addMessage(text,'system')
     setTemp(temp+1)
+    restartRecognition()
   };
 
 
