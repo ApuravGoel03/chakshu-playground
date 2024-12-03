@@ -83,8 +83,8 @@ function App() {
   
     recognition.onend = () => {
       console.log("Recognition ended");
-      setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
-      // restartRecognition();
+      //setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
+      restartRecognition();
     };
   
     recognition.onerror = (event) => {
@@ -104,18 +104,18 @@ function App() {
   }, [phases]);
 
   const startRecognition = () => {
-    if (!isRecognitionActive && recognitionRef.current) {
+    //if (!isRecognitionActive && recognitionRef.current) {
       // if ( recognitionRef.current) {
       recognitionRef.current.start();
       setIsRecognitionActive(true); // Recognition is running, listening for wake word
-    }
+    //}
   };
 
   const stopRecognition = () => {
-    if (isRecognitionActive && recognitionRef.current) {
+    //if (isRecognitionActive && recognitionRef.current) {
       recognitionRef.current.stop();
       setIsRecognitionActive(false);
-    }
+    //}
   };
 
   // const restartRecognition = () => {
@@ -126,13 +126,16 @@ function App() {
   // };
   
   const restartRecognition = () => {
+    console.log("reached here in restart")
     stopRecognition();
-    setTimeout(() => {
-      if (!isRecognitionActive) {
-        console.log("Restarting recognition...");
-        startRecognition();
-      }
-    }, 500); // Small delay to prevent immediate re-triggering issues
+    console.log("Recognition status", isRecognitionActive)
+    //if (!isRecognitionActive) {
+      console.log("Restarting recognition...");
+      startRecognition();
+    //}
+    // setTimeout(() => {
+      
+    // }, 500); // Small delay to prevent immediate re-triggering issues
   };
 
 
@@ -140,34 +143,40 @@ function App() {
     if (prompt.length === 0) {
       console.log("Listening to Prompt");
       recognitionRef.current.onresult = (event) => {
-        const userCommand = event.results[event.results.length - 1][0].transcript.trim();
+        let userCommand = event.results[event.results.length - 1][0].transcript.trim();
         console.log("userCommand", userCommand);
     
         if (
-          !(
+          (
             userCommand.toLowerCase().includes('okay chakshu') || 
             userCommand.toLowerCase().includes('ok chakshu') || 
             userCommand.toLowerCase().includes('ok chaksu') || 
             userCommand.toLowerCase().includes('okay chaksu')
           )
         ) {
+          let commandWords = userCommand.split(" ");
+          commandWords.splice(0,2);
+          userCommand = commandWords.join(" ")
           handleSubmit(userCommand);
           setResponse(`You said: "${userCommand}". Sample response generated.`);
           setIsListening(false); // Stop listening after receiving the command
         }
       };
     } else {
-      const userCommand = prompt;
+      let userCommand = prompt;
       console.log("userCommand", userCommand);
     
       if (
-        !(
+        (
           userCommand.toLowerCase().includes('okay chakshu') || 
           userCommand.toLowerCase().includes('ok chakshu') || 
           userCommand.toLowerCase().includes('ok chaksu') || 
           userCommand.toLowerCase().includes('okay chaksu')
         )
       ) {
+        let commandWords = userCommand.split(" ");
+        commandWords.splice(0,2);
+        userCommand = commandWords.join(" ")
         handleSubmit(userCommand);
         setResponse(`You said: "${userCommand}". Sample response generated.`);
         setIsListening(false); // Stop listening after receiving the command
