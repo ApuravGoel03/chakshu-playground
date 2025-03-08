@@ -134,13 +134,6 @@ function App() {
       setIsRecognitionActive(false);
     //}
   };
-
-  // const restartRecognition = () => {
-  //   stopRecognition();
-  //   setTimeout(() => {
-  //     startRecognition(); // Restart recognition after brief delay
-  //   }, 500);
-  // };
   
   const restartRecognition = () => {
     console.log("reached here in restart")
