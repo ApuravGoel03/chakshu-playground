@@ -11,6 +11,11 @@
         "src": "/eye.png",
         "sizes": "512x512",
         "type": "image/png"
+      },
+      {
+        "src": "/eye-128x128.png",
+        "sizes": "128x128",
+        "type": "image/png"
       }
     ],
     "screenshots": [    
@@ -23,8 +28,8 @@
       "label": "Application"
     },
     {
-        "src": "/eye.png",
-         "sizes": "512x512",
+        "src": "/eye-128x128.png",
+         "sizes": "128x128",
          "type": "image/png",
          "form_factor": "narrow",
          "label": "Application"
