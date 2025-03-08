@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import STT from './components/STT'
-import { TextField, Typography, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import Links from './api_data/links.json'
 import Options from './api_data/options.json'
 import Content from './api_data/content.json'
@@ -23,9 +22,9 @@ function App() {
   const [response, setResponse] = useState(''); // Stores the response
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
-  const [activated, setActivated] = useState(false);
   const [temp, setTemp] = useState(0)
 
+  const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const pauseSpeech = () => {
     if (synthRef.current.speaking && !synthRef.current.paused) {
@@ -48,6 +47,24 @@ function App() {
   };
 
   useEffect(() => {
+    const populateVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        setVoices(availableVoices);
+        console.log('Available voices:', availableVoices);
+    };
+
+    // Populate voices on component mount
+    populateVoices();
+    window.speechSynthesis.cancel()
+    // Add event listener for voice changes
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+    // Clean up the event listener on component unmount
+    return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []); // Empty dependency array to run only once
+
+  useEffect(() => {
     if (!SpeechRecognition) {
       console.error("SpeechRecognition API is not supported in this browser.");
       return;
@@ -63,15 +80,14 @@ function App() {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log("Transcript:", transcript);
   
-      if (transcript.includes('chakshu pause') || transcript.includes('chaksu pause')) {
+      if (transcript.includes(`${wakeword} pause`)) {
         pauseSpeech(); // Call the pause function
-      } else if (transcript.includes('chakshu continue') || transcript.includes('chaksu continue')) {
+      } else if (transcript.includes(`${wakeword} continue`)) {
         continueSpeech(); // Call the resume function
-      } else if (transcript.includes('chakshu reload') || transcript.includes('chaksu reload')) {
+      } else if (transcript.includes(`${wakeword} reload`)) {
         reloadApp(); // Call the reload function
       } else if (
-        (transcript.includes('okay chakshu') || transcript.includes('ok chakshu') || 
-        transcript.includes('ok chaksu') || transcript.includes('okay chaksu')) && temp === 0
+        (transcript.includes(wakeword)) && temp === 0
       ) {
         setIsListening(true); // Now, we are actively listening for the user's command
         handlePromptListening("");
@@ -89,6 +105,7 @@ function App() {
   
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
+      //if(event.error === 'no-speech') speak("No speech detected")
       restartRecognition();
     };
   
@@ -147,15 +164,10 @@ function App() {
         console.log("userCommand", userCommand);
     
         if (
-          (
-            userCommand.toLowerCase().includes('okay chakshu') || 
-            userCommand.toLowerCase().includes('ok chakshu') || 
-            userCommand.toLowerCase().includes('ok chaksu') || 
-            userCommand.toLowerCase().includes('okay chaksu')
-          )
+          ( userCommand.toLowerCase().includes(wakeword))
         ) {
           let commandWords = userCommand.split(" ");
-          commandWords.splice(0,2);
+          commandWords.splice(0,1);
           userCommand = commandWords.join(" ")
           handleSubmit(userCommand);
           setResponse(`You said: "${userCommand}". Sample response generated.`);
@@ -167,15 +179,10 @@ function App() {
       console.log("userCommand", userCommand);
     
       if (
-        (
-          userCommand.toLowerCase().includes('okay chakshu') || 
-          userCommand.toLowerCase().includes('ok chakshu') || 
-          userCommand.toLowerCase().includes('ok chaksu') || 
-          userCommand.toLowerCase().includes('okay chaksu')
-        )
+        ( userCommand.toLowerCase().includes(wakeword))
       ) {
         let commandWords = userCommand.split(" ");
-        commandWords.splice(0,2);
+        commandWords.splice(0,1);
         userCommand = commandWords.join(" ")
         handleSubmit(userCommand);
         setResponse(`You said: "${userCommand}". Sample response generated.`);
@@ -187,57 +194,38 @@ function App() {
   };
   
 
-  useEffect(() => {
-    const populateVoices = () => {
-        const availableVoices = window.speechSynthesis.getVoices();
-        setVoices(availableVoices);
-        // console.log('Available voices:', availableVoices);
-    };
-
-    // Populate voices on component mount
-    populateVoices();
-    window.speechSynthesis.cancel()
-    // Add event listener for voice changes
-    window.speechSynthesis.onvoiceschanged = populateVoices;
-
-    // Clean up the event listener on component unmount
-    return () => {
-        window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []); // Empty dependency array to run only once
-
-  useEffect(() =>{
-    const handleKeydown = (event) => {
-      if (event.ctrlKey) {
-          event.preventDefault();
-          // Pause/Resume speech synthesis
-          if (synthRef.current.speaking) {
-            console.log("hello")
+  // useEffect(() =>{
+  //   const handleKeydown = (event) => {
+  //     if (event.ctrlKey) {
+  //         event.preventDefault();
+  //         // Pause/Resume speech synthesis
+  //         if (synthRef.current.speaking) {
+  //           console.log("hello")
             
-              if (pause && (synthRef.current.pending || synthRef.current.speaking)) {
-                console.log("Played");
-                setPause(false);
-                synthRef.current.resume();
-              } else {
-                console.log("Rukja")
-                setPause(true);
-                synthRef.current.pause();
-              }
+  //             if (pause && (synthRef.current.pending || synthRef.current.speaking)) {
+  //               console.log("Played");
+  //               setPause(false);
+  //               synthRef.current.resume();
+  //             } else {
+  //               console.log("Rukja")
+  //               setPause(true);
+  //               synthRef.current.pause();
+  //             }
              
 
-              // if(!synthRef.current.paused && synthRef.current.pending) {
-              //   //synthRef.current.resume()
-              // }
-          }
-          console.log(synthRef.current);
-      }
-    };
-    document.addEventListener('keydown', handleKeydown);
+  //             // if(!synthRef.current.paused && synthRef.current.pending) {
+  //             //   //synthRef.current.resume()
+  //             // }
+  //         }
+  //         console.log(synthRef.current);
+  //     }
+  //   };
+  //   document.addEventListener('keydown', handleKeydown);
 
-    return () => {
-      document.removeEventListener('keydown', handleKeydown);
-    };
-  },[isSpeaking, pause])
+  //   return () => {
+  //     document.removeEventListener('keydown', handleKeydown);
+  //   };
+  // },[isSpeaking, pause])
 
   // useEffect(() => {
   //   const handleKeyDown = (event) => {
@@ -288,21 +276,21 @@ function App() {
   //   };
   // }, [options]);
 
-  useEffect(() => {
-    const scrollToBottomSmoothly = () => {
-      if (synthRef.current.speaking&& !synthRef.current.paused && divRef.current) {
-        const targetScrollTop = divRef.current.scrollHeight;
-        const currentScrollTop = divRef.current.scrollTop;
-        const step = 10; // Adjust step for speed (higher values scroll faster)
-        if (currentScrollTop < targetScrollTop) {
-          const newScrollTop = Math.min(currentScrollTop + step, targetScrollTop);
-          divRef.current.scrollTop = newScrollTop;
-          setTimeout(scrollToBottomSmoothly, 20); // Adjust timeout for speed (lower values scroll faster)
-        }
-      }
-    };
-    scrollToBottomSmoothly();
-  }, [messages]);
+  // useEffect(() => {
+  //   const scrollToBottomSmoothly = () => {
+  //     if (synthRef.current.speaking&& !synthRef.current.paused && divRef.current) {
+  //       const targetScrollTop = divRef.current.scrollHeight;
+  //       const currentScrollTop = divRef.current.scrollTop;
+  //       const step = 10; // Adjust step for speed (higher values scroll faster)
+  //       if (currentScrollTop < targetScrollTop) {
+  //         const newScrollTop = Math.min(currentScrollTop + step, targetScrollTop);
+  //         divRef.current.scrollTop = newScrollTop;
+  //         setTimeout(scrollToBottomSmoothly, 20); // Adjust timeout for speed (lower values scroll faster)
+  //       }
+  //     }
+  //   };
+  //   scrollToBottomSmoothly();
+  // }, [messages]);
 
   const handleSubmit = (speech) =>{
     console.log("Function called with ",speech)
@@ -322,8 +310,6 @@ function App() {
         callLinkAPI(speechText);
     } else if (phases === "OPTION_SELECTION") {
         callOptionAPI(speechText);
-    } else {
-      resetToInitialState();
     }
   };
 
@@ -439,10 +425,6 @@ function App() {
   };
 
 
-  const handleActivation = () => {
-    setActivated(true); // User has interacted with the page
-  };
-
   // console.log("pause", pause)
   // const resetToInitialState = () => {
   //   setOptions([]);
@@ -450,11 +432,6 @@ function App() {
   // };
   return (
     <div className="app">
-   {!activated? (
-        <button onClick={handleActivation}>
-          Activate Chakshu
-        </button>
-      ) : (
         <>
           <div style={{display:'flex',flexDirection:'column', justifyContent:'center', height:'100vh',margin:'0'}}>
       <div style={{color:'#3795BD',height:'15%', padding:'2px 10px'}}>
@@ -497,14 +474,12 @@ function App() {
       <div style={{height:'15%',padding:'10px',margin:'0 auto'}}>
         {/* <STT onTextSubmit={handleSubmit}/> */}
           <div className="status">
-            {isListening ? <p>Listening for your prompt...</p> : <p>Say "Ok Chakshu" to start.</p>}
+            {isListening ? <p>Listening for your prompt...</p> : <p>Say {wakeword} to start.</p>}
             {response  && <p>Response: {response}</p>}
           </div>
       </div>
     </div>
         </>
-      )}
-
     </div>
   )
 }

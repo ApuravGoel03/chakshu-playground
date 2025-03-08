@@ -1,0 +1,38 @@
+{
+    "name": "Chakshu",
+    "short_name": "Chakshu",
+    "id": "/",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [
+      {
+        "src": "/eye.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "screenshots": [    
+   {
+
+     "src": "/eye.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Application"
+    },
+    {
+        "src": "/eye.png",
+         "sizes": "512x512",
+         "type": "image/png",
+         "form_factor": "narrow",
+         "label": "Application"
+    }
+    ],
+    "permissions": [
+    "microphone",
+    "media_session"
+    ]
+  }
+  
