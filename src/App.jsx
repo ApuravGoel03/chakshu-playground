@@ -346,9 +346,11 @@ function App() {
     //for now hardcoded
 
     if (option.includes("1") || option.includes("one") || option.includes("won")) {
+      speak("Short Description is ")
       speak(Content[0].short_description);
     } 
     else if (option.includes("2") || option.includes("to") || option.includes("two") || option.includes("too")) {
+        speak("Summary is ")
         speak(Content[1].summary);
     } 
     else if (option.includes("3") || option.includes("three") || option.includes("tree")) {
@@ -356,16 +358,15 @@ function App() {
         Content[2].text.map((s) => {
             word += s;
         });
+        speak("Reading the whole page")
         speak(word);
     } 
     else if (option.includes("4") || option.includes("four") || option.includes("for") ) {
+        speak("Image Captions are ")
         speak(Content[3].image_captions);
-    } else if (option.includes("5")) {
+    } else if (option.includes("5") || option.includes("five")) {
+        speak("References are ")
         speak(Content[4].references);
-    }
-    else if(option.includes("5") || option.includes("five")){
-      speak("you selected " + option)
-      speak(Content[0].short_description)
     }
     else{
       speak("Can't understand. Please speak the option number!")
