@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { Box } from '@mui/material';
-import Links from './api_data/links.json'
-import Options from './api_data/options.json'
 import Content from './api_data/content.json'
 
+let links = [];
+let article = '';
 function App() {
 
   const [messages, setMessages] = useState([]); // Holds the chat messages
@@ -13,8 +13,7 @@ function App() {
   const [phases, setPhases] = useState("QUERY")
   const [pause, setPause] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [links, setLinks] = useState([])
-  const [selectedArticle, setSelectedArticle] = useState({})
+  //const [links, setLinks] = useState([])
   const [selectedopt, setSelectedOpt] = useState(0)
   const synthRef = useRef(window.speechSynthesis);
   const divRef = useRef(null); 
@@ -23,9 +22,51 @@ function App() {
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
-
+  
+  
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const fetchData = async (url) =>{
+    speak("Processing your request. Please wait.")
+    // Start interval to notify user every 10 seconds
+    const intervalId = setInterval(() => {
+      speak("Processing your request. Please wait.")
+    }, 10000);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        switch (response.status) {
+          case 400:
+            throw new Error('Bad Request – The server could not understand the request.');
+          case 401:
+            throw new Error('Unauthorized – You need to log in.');
+          case 403:
+            throw new Error('Forbidden – You don’t have permission to access this.');
+          case 404:
+            throw new Error('Not Found – The requested resource was not found.');
+          case 500:
+            throw new Error('Internal Server Error – Please try again later.');
+          case 503:
+            throw new Error('Service Unavailable – The server is temporarily unavailable.');
+          default:
+            throw new Error(`Unexpected Error – Status: ${response.status}`);
+        }
+      }
+  
+      const json = await response.json();
+      console.log(json);
+      // Stop the interval once data is fetched
+      clearInterval(intervalId);
+      return json;
+    } catch (error) {
+      console.error(error.message);
+      speak(error.message);
+      // Stop the interval once data is fetched
+      clearInterval(intervalId);
+      throw error;
+    }
+  }
   const pauseSpeech = () => {
     if (synthRef.current.speaking && !synthRef.current.paused) {
       console.log('Pausing speech...');
@@ -106,7 +147,7 @@ function App() {
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
       //if(event.error === 'no-speech') speak("No speech detected")
-      restartRecognition();
+      if(event.error === 'aborted') restartRecognition();
     };
   
     startRecognition(); // Start the recognition service initially
@@ -152,6 +193,7 @@ function App() {
   const handlePromptListening = (prompt) => {
     if (prompt.length === 0) {
       console.log("Listening to Prompt");
+      speak("Please speak your query.")
       recognitionRef.current.onresult = (event) => {
         let userCommand = event.results[event.results.length - 1][0].transcript.trim();
         console.log("userCommand", userCommand);
@@ -159,6 +201,7 @@ function App() {
         if (
           ( userCommand.toLowerCase().includes(wakeword))
         ) {
+          window.speechSynthesis.cancel()
           let commandWords = userCommand.split(" ");
           commandWords.splice(0,1);
           userCommand = commandWords.join(" ")
@@ -174,6 +217,7 @@ function App() {
       if (
         ( userCommand.toLowerCase().includes(wakeword))
       ) {
+        window.speechSynthesis.cancel()
         let commandWords = userCommand.split(" ");
         commandWords.splice(0,1);
         userCommand = commandWords.join(" ")
@@ -310,25 +354,74 @@ function App() {
     setMessages((prevMessages) => [...prevMessages, { text, sender }]);
   };
 
-  const callQueryAPI = (query) => {
+  const callQueryAPI = async (query) => {
     // Api calling here for links fetching based on query
+    const apiUrl = `https://chakshu.onrender.com/api/search/?q=${query}`
+    const response = await fetchData(apiUrl)
+    if(response === "Error"){
+      speak("Error in fetching data")
+      return
+    }
     console.log("callQueryAPI ")
-    speak(Links.message);
-    Links.results.map((result,index) =>{
-      if(index < 4){
-        setLinks((links) => [...links, {result}])
-        speak(`Option ${index + 1}:\nTitle : ${result.title}\nShort Description : ${result.short_description}`)
-      }
+    speak(response.message);
+    response.results.map((result,index) =>{
+      links.push(result.url);
+      console.log(result.url)
+      speak(`Option ${index + 1}:\nTitle : ${result.title}\nShort Description : ${result.short_description}`)
     })
+    console.log(links)
   };
 
-  const callLinkAPI = (article) => {
+  const callLinkAPI = async (speech) => {
     // Api calling here for telling the user options available
-
-    console.log("callLinkAPI")
+    var index = 0;
+    if (speech.includes("1") || speech.includes("one") || speech.includes("won")) {
+      index = 0;
+    } 
+    else if (speech.includes("2") || speech.includes("to") || speech.includes("two") || speech.includes("too")) {
+      index = 1;
+    } 
+    else if (speech.includes("3") || speech.includes("three") || speech.includes("tree")) {
+      index = 2;
+    } 
+    else if (speech.includes("4") || speech.includes("four") || speech.includes("for") ) {
+      index = 3;
+    } else if (speech.includes("5") || speech.includes("five")) {
+      index = 4;
+    }
+    else if (speech.includes("6") || speech.includes("six")) {
+      index = 5;
+    }
+    else if (speech.includes("7") || speech.includes("seven")) {
+      index = 6;
+    }
+    else if (speech.includes("8") || speech.includes("eight")) {
+      index = 7;
+    }
+    else if (speech.includes("9") || speech.includes("nine")) {
+      index = 8;
+    }
+    else if (speech.includes("10") || speech.includes("ten") || speech.includes("tan")) { 
+      index = 9;
+    }
+    else{
+      speak("Can't understand. Please speak the option number!")
+      return
+    }
+    console.log(index)
+    console.log(links)
+    article = links[index]
     setPhases("OPTION_SELECTION")
-    speak(Options.message)
-    Options.options.map((option,index) => {
+    const url = `https://chakshu.onrender.com/api/select/?link=${article}`
+    const response = await fetchData(url)
+    if(response === "Error"){
+      speak("Error in fetching data")
+      return
+    }
+    console.log("callLinkAPI")
+    
+    speak(response.message)
+    response.options.map((option,index) => {
       setOptions((options) => [...options, option])
       console.log(phases)
       speak(`Option ${index + 1} for ${option}`)
@@ -336,7 +429,7 @@ function App() {
     
   };
 
-  const callOptionAPI = (option) => {
+  const callOptionAPI = async (option) => {
     // Api calling here to get the content based on selected article and option
     console.log("callOptionAPI")
     console.log(phases)
@@ -346,27 +439,50 @@ function App() {
     //for now hardcoded
 
     if (option.includes("1") || option.includes("one") || option.includes("won")) {
+      const response = await fetchData(`https://chakshu.onrender.com/api/process/?link=${article}&option=1`)
+      if(response === "Error"){
+        speak("Error in fetching data")
+        return
+      }
       speak("Short Description is ")
-      speak(Content[0].short_description);
+      speak(response.short_description);
     } 
     else if (option.includes("2") || option.includes("to") || option.includes("two") || option.includes("too")) {
-        speak("Summary is ")
-        speak(Content[1].summary);
+      const response = await fetchData(`https://chakshu.onrender.com/api/process/?link=${article}&option=2`)
+      if(response === "Error"){
+        speak("Error in fetching data")
+        return
+      }
+      speak("Summary is ")
+      speak(response.summary);
     } 
     else if (option.includes("3") || option.includes("three") || option.includes("tree")) {
-        let word = "";
-        Content[2].text.map((s) => {
-            word += s;
-        });
-        speak("Reading the whole page")
-        speak(word);
+      const response = await fetchData(`https://chakshu.onrender.com/api/process/?link=${article}&option=3`)
+      if(response === "Error"){
+        speak("Error in fetching data")
+        return
+      }
+      speak("Reading the whole page")
+      speak(response.text);
     } 
-    else if (option.includes("4") || option.includes("four") || option.includes("for") ) {
-        speak("Image Captions are ")
-        speak(Content[3].image_captions);
+    else if (option.includes("4") || option.includes("four") || option.includes("for") ) {4
+      const response = await fetchData(`https://chakshu.onrender.com/api/process/?link=${article}&option=4`)
+      if(response === "Error"){
+        speak("Error in fetching data")
+        return
+      }
+      speak("Image Captions are ")
+      speak(Content[3].image_captions);
     } else if (option.includes("5") || option.includes("five")) {
-        speak("References are ")
-        speak(Content[4].references);
+      const response = await fetchData(`https://chakshu.onrender.com/api/process/?link=${article}&option=5`)
+      if(response === "Error"){
+        speak("Error in fetching data")
+        return
+      }
+      speak("References are ")
+      response.text.map((ref) => {
+        speak(ref)
+      })
     }
     else{
       speak("Can't understand. Please speak the option number!")
