@@ -22,7 +22,7 @@ function App() {
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
-  
+  const audioRef = useRef(new Audio('/activateSound.wav'));
   
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -84,7 +84,8 @@ function App() {
   };
   
   const reloadApp = () => {
-    window.location.reload();
+    audioRef.current.play();
+    setTimeout(() => { window.location.reload(); }, 500);
   };
 
   useEffect(() => {
@@ -131,6 +132,7 @@ function App() {
         (transcript.includes(wakeword)) && temp === 0
       ) {
         setIsListening(true); // Now, we are actively listening for the user's command
+        audioRef.current.play();
         handlePromptListening("");
       } else if (temp > 0) {
         handlePromptListening(transcript);
@@ -202,6 +204,7 @@ function App() {
           ( userCommand.toLowerCase().includes(wakeword))
         ) {
           window.speechSynthesis.cancel()
+          audioRef.current.play();
           let commandWords = userCommand.split(" ");
           commandWords.splice(0,1);
           userCommand = commandWords.join(" ")
@@ -218,6 +221,7 @@ function App() {
         ( userCommand.toLowerCase().includes(wakeword))
       ) {
         window.speechSynthesis.cancel()
+        audioRef.current.play();
         let commandWords = userCommand.split(" ");
         commandWords.splice(0,1);
         userCommand = commandWords.join(" ")
@@ -419,7 +423,7 @@ function App() {
       return
     }
     console.log("callLinkAPI")
-    
+
     speak(response.message)
     response.options.map((option,index) => {
       setOptions((options) => [...options, option])
@@ -479,10 +483,16 @@ function App() {
         speak("Error in fetching data")
         return
       }
-      speak("References are ")
-      response.text.map((ref) => {
-        speak(ref)
-      })
+      if(response.text.length !== 0){
+        speak("References are ")
+        response.text.map((ref) => {
+          console.log(ref)
+          speak(ref)
+        })
+      }
+      else{
+        speak("No references available")
+      }
     }
     else{
       speak("Can't understand. Please speak the option number!")
