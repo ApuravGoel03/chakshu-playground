@@ -27,6 +27,15 @@ function App() {
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+  const playAudio = async () => {
+    if (!audioRef.current) return;
+
+    await new Promise((resolve) => {
+      audioRef.current.onended = resolve; // Resolve promise when audio ends
+      audioRef.current.play();
+    });
+  };
+
   const fetchData = async (url) =>{
     speak("Processing your request. Please wait.")
     // Start interval to notify user every 10 seconds
@@ -83,9 +92,9 @@ function App() {
     }
   };
   
-  const reloadApp = () => {
-    audioRef.current.play();
-    setTimeout(() => { window.location.reload(); }, 500);
+  const reloadApp = async () => {
+    await playAudio();
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -192,11 +201,11 @@ function App() {
   };
 
 
-  const handlePromptListening = (prompt) => {
+  const handlePromptListening = async (prompt) => {
     if (prompt.length === 0) {
       console.log("Listening to Prompt");
       speak("Please speak your query.")
-      recognitionRef.current.onresult = (event) => {
+      recognitionRef.current.onresult = async (event) => {
         let userCommand = event.results[event.results.length - 1][0].transcript.trim();
         console.log("userCommand", userCommand);
     
@@ -204,7 +213,7 @@ function App() {
           ( userCommand.toLowerCase().includes(wakeword))
         ) {
           window.speechSynthesis.cancel()
-          audioRef.current.play();
+          await playAudio();
           let commandWords = userCommand.split(" ");
           commandWords.splice(0,1);
           userCommand = commandWords.join(" ")
@@ -221,7 +230,7 @@ function App() {
         ( userCommand.toLowerCase().includes(wakeword))
       ) {
         window.speechSynthesis.cancel()
-        audioRef.current.play();
+        await playAudio();
         let commandWords = userCommand.split(" ");
         commandWords.splice(0,1);
         userCommand = commandWords.join(" ")
