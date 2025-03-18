@@ -22,7 +22,8 @@ function App() {
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
-  const audioRef = useRef(new Audio('/activateSound.mp3'));
+  const audioRef = useRef(null);
+  
   
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -35,7 +36,24 @@ function App() {
   //     audioRef.current.play();
   //   });
   // };
+  useEffect(() => {
+    audioRef.current = new Audio('/activateSound.mp3');
+    audioRef.current.preload = 'auto'; // Preload the audio
+    audioRef.current.crossOrigin = 'anonymous'; // Fix CORS issues if applicable
 
+    audioRef.current.addEventListener('canplaythrough', () => {
+      console.log('Audio loaded and ready to play');
+    });
+
+    audioRef.current.addEventListener('error', (e) => {
+      console.error('Audio loading error:', e);
+    });
+
+    return () => {
+      audioRef.current = null;
+    };
+  }, []);
+  
   const fetchData = async (url) =>{
     speak("Processing your request. Please wait.")
     // Start interval to notify user every 10 seconds
