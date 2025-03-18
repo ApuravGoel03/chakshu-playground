@@ -22,19 +22,19 @@ function App() {
   const recognitionRef = useRef(null); // Reference to store recognition instance
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
-  const audioRef = useRef(new Audio('/activateSound.wav'));
+  const audioRef = useRef(new Audio('/activateSound.mp3'));
   
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  const playAudio = async () => {
-    if (!audioRef.current) return;
+  // const playAudio = async () => {
+  //   if (!audioRef.current) return;
 
-    await new Promise((resolve) => {
-      audioRef.current.onended = resolve; // Resolve promise when audio ends
-      audioRef.current.play();
-    });
-  };
+  //   return new Promise((resolve) => {
+  //     audioRef.current.onended = resolve; // Resolve promise when audio ends
+  //     audioRef.current.play();
+  //   });
+  // };
 
   const fetchData = async (url) =>{
     speak("Processing your request. Please wait.")
@@ -93,8 +93,8 @@ function App() {
   };
   
   const reloadApp = async () => {
-    await playAudio();
-    window.location.reload();
+    audioRef.current.play();
+    setTimeout(()=>{window.location.reload();},500) 
   };
 
   useEffect(() => {
@@ -213,7 +213,7 @@ function App() {
           ( userCommand.toLowerCase().includes(wakeword))
         ) {
           window.speechSynthesis.cancel()
-          await playAudio();
+          audioRef.current.play();
           let commandWords = userCommand.split(" ");
           commandWords.splice(0,1);
           userCommand = commandWords.join(" ")
@@ -230,7 +230,7 @@ function App() {
         ( userCommand.toLowerCase().includes(wakeword))
       ) {
         window.speechSynthesis.cancel()
-        await playAudio();
+        audioRef.current.play();
         let commandWords = userCommand.split(" ");
         commandWords.splice(0,1);
         userCommand = commandWords.join(" ")
