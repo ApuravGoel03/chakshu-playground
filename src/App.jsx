@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { Box } from '@mui/material';
-import Content from './api_data/content.json'
 
 let links = [];
 let article = '';
@@ -496,14 +495,16 @@ function App() {
       speak("Reading the whole page")
       speak(response.text);
     } 
-    else if (option.includes("4") || option.includes("four") || option.includes("for") ) {4
+    else if (option.includes("4") || option.includes("four") || option.includes("for") ) {
       const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=4`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
       }
       speak("Image Captions are ")
-      speak(Content[3].image_captions);
+      response.text.map((result,index)=>{
+        speak(`Image ${index + 1} : ${result.final_caption}`)
+      })
     } else if (option.includes("5") || option.includes("five")) {
       const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=5`)
       if(response === "Error"){
