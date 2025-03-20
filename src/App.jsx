@@ -405,10 +405,8 @@ function App() {
   const callLinkAPI = async (speech) => {
     // Api calling here for telling the user options available
     var index = 0;
-    if (speech.includes("10") || speech.includes("ten") || speech.includes("tan")) { 
-      index = 9;
-    }
-    else if (speech.includes("1") || speech.includes("one") || speech.includes("won")) {
+    
+    if (speech.includes("1") || speech.includes("one") || speech.includes("won")) {
       index = 0;
     } 
     else if (speech.includes("2") || speech.includes("to") || speech.includes("two") || speech.includes("too")) {
@@ -433,6 +431,9 @@ function App() {
     }
     else if (speech.includes("9") || speech.includes("nine")) {
       index = 8;
+    }
+    else if (speech.includes("10") || speech.includes("ten") || speech.includes("tan")) { 
+      index = 9;
     }
     else{
       speak("Can't understand. Please speak the option number!")
