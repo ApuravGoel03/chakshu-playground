@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 
 let links = [];
 let article = '';
+const url = 'https://chakshu-container.thankfultree-153e6b30.westus2.azurecontainerapps.io'
 function App() {
 
   const [messages, setMessages] = useState([]); // Holds the chat messages
@@ -26,6 +27,7 @@ function App() {
   
   const wakeword = 'assistant'
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
 
   // const playAudio = async () => {
   //   if (!audioRef.current) return;
@@ -94,6 +96,7 @@ function App() {
     }
   }
   const pauseSpeech = () => {
+    audioRef.current.play();
     if (synthRef.current.speaking && !synthRef.current.paused) {
       console.log('Pausing speech...');
       synthRef.current.pause();
@@ -102,6 +105,7 @@ function App() {
   };
   
   const continueSpeech = () => {
+    audioRef.current.play();
     if (synthRef.current.paused) {
       console.log('Resuming speech...');
       synthRef.current.resume();
@@ -148,9 +152,9 @@ function App() {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log("Transcript:", transcript);
   
-      if (transcript.includes(`${wakeword} pause`)) {
+      if (transcript.includes(`${wakeword} pause`) || (transcript.includes(`${wakeword} pose`))) {
         pauseSpeech(); // Call the pause function
-      } else if (transcript.includes(`${wakeword} continue`)) {
+      } else if (transcript.includes(`${wakeword} continue`) || (transcript.includes(`${wakeword} resume`))) {
         continueSpeech(); // Call the resume function
       } else if (transcript.includes(`${wakeword} reload`)) {
         reloadApp(); // Call the reload function
@@ -386,7 +390,7 @@ function App() {
 
   const callQueryAPI = async (query) => {
     // Api calling here for links fetching based on query
-    const apiUrl = `https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/search/?q=${query}`
+    const apiUrl = `${url}//api/search/?q=${query}`
     const response = await fetchData(apiUrl)
     if(response === "Error"){
       speak("Error in fetching data")
@@ -443,8 +447,8 @@ function App() {
     console.log(links)
     article = links[index]
     setPhases("OPTION_SELECTION")
-    const url = `https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/select/?link=${article}`
-    const response = await fetchData(url)
+    const url2 = `${url}//api/select/?link=${article}`
+    const response = await fetchData(url2)
     if(response === "Error"){
       speak("Error in fetching data")
       return
@@ -470,7 +474,7 @@ function App() {
     //for now hardcoded
 
     if (option.includes("1") || option.includes("one") || option.includes("won")) {
-      const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=1`)
+      const response = await fetchData(`${url}//api/process/?link=${article}&option=1`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
@@ -479,7 +483,7 @@ function App() {
       speak(response.short_description);
     } 
     else if (option.includes("2") || option.includes("to") || option.includes("two") || option.includes("too")) {
-      const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=2`)
+      const response = await fetchData(`${url}//api/process/?link=${article}&option=2`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
@@ -488,7 +492,7 @@ function App() {
       speak(response.summary);
     } 
     else if (option.includes("3") || option.includes("three") || option.includes("tree")) {
-      const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=3`)
+      const response = await fetchData(`${url}//api/process/?link=${article}&option=3`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
@@ -497,7 +501,7 @@ function App() {
       speak(response.text);
     } 
     else if (option.includes("4") || option.includes("four") || option.includes("for") ) {
-      const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=4`)
+      const response = await fetchData(`${url}//api/process/?link=${article}&option=4`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
@@ -507,7 +511,7 @@ function App() {
         speak(`Image ${index + 1} : ${result.final_caption}`)
       })
     } else if (option.includes("5") || option.includes("five")) {
-      const response = await fetchData(`https://chakshu-backend.thankfulflower-944a1dd2.southindia.azurecontainerapps.io//api/process/?link=${article}&option=5`)
+      const response = await fetchData(`${url}//api/process/?link=${article}&option=5`)
       if(response === "Error"){
         speak("Error in fetching data")
         return
