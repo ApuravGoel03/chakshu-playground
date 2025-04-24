@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 
 let links = [];
 let article = '';
-const url = 'https://chakshu-container.thankfultree-153e6b30.westus2.azurecontainerapps.io'
+const url = 'https://chakshu-container.ambitiousrock-b8622b04.westus2.azurecontainerapps.io'
 function App() {
 
   const [messages, setMessages] = useState([]); // Holds the chat messages
