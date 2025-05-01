@@ -122,6 +122,38 @@ function App() {
     setTimeout(()=>{window.location.reload();},500) 
   };
 
+  const getAudioStream = async () => {
+    const baseConstraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      }
+    };
+  
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(baseConstraints);
+      console.log("Stream with noise cancellation acquired.");
+      return stream;
+    } catch (err) {
+      console.warn("Noise cancellation constraints not supported or denied. Retrying without them.", err);
+  
+      // Retry without noise cancellation
+      const fallbackConstraints = {
+        audio: true
+      };
+  
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        console.log("Fallback stream acquired without noise suppression.");
+        return fallbackStream;
+      } catch (finalErr) {
+        console.error("Failed to access microphone at all:", finalErr);
+        return null;
+      }
+    }
+  };
+  
   useEffect(() => {
     const populateVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices();
@@ -155,14 +187,7 @@ function App() {
   
     // Set up audio context and analyser for volume detection
     const setupAudioAnalysis = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-  
+      const stream = await getAudioStream()
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
