@@ -23,6 +23,10 @@ function App() {
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
   const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const isSpeakingRef = useRef(false); // Prevent repeated triggers
+
   
   
   const wakeword = 'assistant'
@@ -137,57 +141,103 @@ function App() {
   }, []); // Empty dependency array to run only once
 
   useEffect(() => {
-    if (!SpeechRecognition) {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
       console.error("SpeechRecognition API is not supported in this browser.");
       return;
     }
   
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Keep running continuously
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
     recognitionRef.current = recognition;
+  
+    // Set up audio context and analyser for volume detection
+    const setupAudioAnalysis = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+  
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      const data = new Uint8Array(analyser.fftSize);
+  
+      source.connect(analyser);
+  
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+  
+      const detectSpeech = () => {
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const val = (data[i] - 128) / 128;
+          sum += val * val;
+        }
+        const rms = Math.sqrt(sum / data.length);
+  
+        if (rms > 0.03 && !isSpeakingRef.current) {
+          isSpeakingRef.current = true;
+          startRecognition();
+        }
+  
+        // Reset flag if quiet
+        if (rms < 0.02) {
+          isSpeakingRef.current = false;
+        }
+  
+        requestAnimationFrame(detectSpeech);
+      };
+  
+      detectSpeech();
+    };
+  
+    setupAudioAnalysis();
   
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log("Transcript:", transcript);
   
-      if (transcript.includes(`${wakeword} pause`) || (transcript.includes(`${wakeword} pose`))) {
-        pauseSpeech(); // Call the pause function
-      } else if (transcript.includes(`${wakeword} continue`) || (transcript.includes(`${wakeword} resume`))) {
-        continueSpeech(); // Call the resume function
+      if (transcript.includes(`${wakeword} pause`) || transcript.includes(`${wakeword} pose`)) {
+        pauseSpeech();
+      } else if (transcript.includes(`${wakeword} continue`) || transcript.includes(`${wakeword} resume`)) {
+        continueSpeech();
       } else if (transcript.includes(`${wakeword} reload`)) {
-        reloadApp(); // Call the reload function
-      } else if (
-        (transcript.includes(wakeword)) && temp === 0
-      ) {
-        setIsListening(true); // Now, we are actively listening for the user's command
+        reloadApp();
+      } else if (transcript.includes(wakeword) && temp === 0) {
+        setIsListening(true);
         audioRef.current.play();
         handlePromptListening("");
       } else if (temp > 0) {
         handlePromptListening(transcript);
       }
     };
-     
   
     recognition.onend = () => {
       console.log("Recognition ended");
-      //setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
       restartRecognition();
     };
   
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
-      //if(event.error === 'no-speech') speak("No speech detected")
-      if(event.error === 'aborted') restartRecognition();
+      if (event.error === 'aborted') restartRecognition();
     };
-  
-    startRecognition(); // Start the recognition service initially
   
     return () => {
-      recognition.stop(); // Clean up on unmount
+      recognition.stop();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, [temp]);
+  
 
   useEffect(() => {
     console.log("******************",phases)
