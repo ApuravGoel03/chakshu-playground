@@ -23,10 +23,6 @@ function App() {
   const [isRecognitionActive, setIsRecognitionActive] = useState(false); // Tracks if recognition is running at all
   const [temp, setTemp] = useState(0)
   const audioRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const isSpeakingRef = useRef(false); // Prevent repeated triggers
-
   
   
   const wakeword = 'assistant'
@@ -122,38 +118,6 @@ function App() {
     setTimeout(()=>{window.location.reload();},500) 
   };
 
-  const getAudioStream = async () => {
-    const baseConstraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      }
-    };
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(baseConstraints);
-      console.log("Stream with noise cancellation acquired.");
-      return stream;
-    } catch (err) {
-      console.warn("Noise cancellation constraints not supported or denied. Retrying without them.", err);
-  
-      // Retry without noise cancellation
-      const fallbackConstraints = {
-        audio: true
-      };
-  
-      try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-        console.log("Fallback stream acquired without noise suppression.");
-        return fallbackStream;
-      } catch (finalErr) {
-        console.error("Failed to access microphone at all:", finalErr);
-        return null;
-      }
-    }
-  };
-  
   useEffect(() => {
     const populateVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices();
@@ -173,160 +137,57 @@ function App() {
   }, []); // Empty dependency array to run only once
 
   useEffect(() => {
-    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+    if (!SpeechRecognition) {
       console.error("SpeechRecognition API is not supported in this browser.");
       return;
     }
   
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
     const recognition = new SpeechRecognition();
-    const grammar = '#JSGF V1.0; grammar command; public <command> = assistant | reload | pause | continue | resume | one | two | three | four| five | six | seven | eight | nine | ten | option ;';
-
-    const speechRecognitionList = new SpeechGrammarList();
-    speechRecognitionList.addFromString(grammar, 1); // 1 = weight (priority)
-
-    recognition.grammars = speechRecognitionList;
-    recognition.continuous = true;
+    recognition.continuous = true; // Keep running continuously
     recognition.interimResults = false;
     recognition.lang = 'en-US';
     recognitionRef.current = recognition;
-  
-    // Set up audio context and analyser for volume detection
-    const setupAudioAnalysis = async () => {
-      const stream = await getAudioStream()
-      if(!stream){
-        startRecognition()
-        return
-      }
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      const data = new Uint8Array(analyser.fftSize);
-  
-      source.connect(analyser);
-  
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-  
-      const detectSpeech = () => {
-        analyser.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) {
-          const val = (data[i] - 128) / 128;
-          sum += val * val;
-        }
-        const rms = Math.sqrt(sum / data.length);
-  
-        if (rms > 0.03 && !isSpeakingRef.current) {
-          isSpeakingRef.current = true;
-          startRecognition();
-        }
-  
-        // Reset flag if quiet
-        if (rms < 0.02) {
-          isSpeakingRef.current = false;
-        }
-  
-        requestAnimationFrame(detectSpeech);
-      };
-  
-      detectSpeech();
-    };
-  
-    setupAudioAnalysis();
   
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       console.log("Transcript:", transcript);
   
-      if (transcript.includes(`${wakeword} pause`) || transcript.includes(`${wakeword} pose`)) {
-        pauseSpeech();
-      } else if (transcript.includes(`${wakeword} continue`) || transcript.includes(`${wakeword} resume`)) {
-        continueSpeech();
+      if (transcript.includes(`${wakeword} pause`) || (transcript.includes(`${wakeword} pose`))) {
+        pauseSpeech(); // Call the pause function
+      } else if (transcript.includes(`${wakeword} continue`) || (transcript.includes(`${wakeword} resume`))) {
+        continueSpeech(); // Call the resume function
       } else if (transcript.includes(`${wakeword} reload`)) {
-        reloadApp();
-      } else if (transcript.includes(wakeword) && temp === 0) {
-        setIsListening(true);
+        reloadApp(); // Call the reload function
+      } else if (
+        (transcript.includes(wakeword)) && temp === 0
+      ) {
+        setIsListening(true); // Now, we are actively listening for the user's command
         audioRef.current.play();
         handlePromptListening("");
       } else if (temp > 0) {
         handlePromptListening(transcript);
       }
     };
+     
   
     recognition.onend = () => {
       console.log("Recognition ended");
+      //setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
       restartRecognition();
     };
   
     recognition.onerror = (event) => {
       console.error('SpeechRecognition error:', event.error);
-      if (event.error === 'aborted') restartRecognition();
+      //if(event.error === 'no-speech') speak("No speech detected")
+      if(event.error === 'aborted') restartRecognition();
     };
+  
+    startRecognition(); // Start the recognition service initially
   
     return () => {
-      recognition.stop();
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      recognition.stop(); // Clean up on unmount
     };
   }, [temp]);
-
-  //   useEffect(() => {
-  //   if (!SpeechRecognition) {
-  //     console.error("SpeechRecognition API is not supported in this browser.");
-  //     return;
-  //   }
-  
-  //   const recognition = new SpeechRecognition();
-  //   recognition.continuous = true; // Keep running continuously
-  //   recognition.interimResults = false;
-  //   recognition.lang = 'en-US';
-  //   recognitionRef.current = recognition;
-  
-  //   recognition.onresult = (event) => {
-  //     const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-  //     console.log("Transcript:", transcript);
-  
-  //     if (transcript.includes(`${wakeword} pause`) || (transcript.includes(`${wakeword} pose`))) {
-  //       pauseSpeech(); // Call the pause function
-  //     } else if (transcript.includes(`${wakeword} continue`) || (transcript.includes(`${wakeword} resume`))) {
-  //       continueSpeech(); // Call the resume function
-  //     } else if (transcript.includes(`${wakeword} reload`)) {
-  //       reloadApp(); // Call the reload function
-  //     } else if (
-  //       (transcript.includes(wakeword)) && temp === 0
-  //     ) {
-  //       setIsListening(true); // Now, we are actively listening for the user's command
-  //       audioRef.current.play();
-  //       handlePromptListening("");
-  //     } else if (temp > 0) {
-  //       handlePromptListening(transcript);
-  //     }
-  //   };
-     
-  
-  //   recognition.onend = () => {
-  //     console.log("Recognition ended");
-  //     //setIsRecognitionActive(false); // If the recognition stops for any reason, update the state.
-  //     restartRecognition();
-  //   };
-  
-  //   recognition.onerror = (event) => {
-  //     console.error('SpeechRecognition error:', event.error);
-  //     //if(event.error === 'no-speech') speak("No speech detected")
-  //     if(event.error === 'aborted') restartRecognition();
-  //   };
-  
-  //   startRecognition(); // Start the recognition service initially
-  
-  //   return () => {
-  //     recognition.stop(); // Clean up on unmount
-  //   };
-  // }, [temp]);
-  
 
   useEffect(() => {
     console.log("******************",phases)
